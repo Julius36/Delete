@@ -1,0 +1,29 @@
+---
+
+- hosts: all
+  become: true
+  vars:
+    website_repo_url: "https://github.com/Julius36/Web-Dev.git"
+    web_root: "/var/www/html"
+    
+  tasks:
+
+  - name: Install apache package and git
+    package:
+      name: 
+        - "{{ apache_package }}"
+        - "{{ git_package }}"
+      state: latest
+
+  - name: Cloning GitHub Repository
+    git:
+      repo: "https://github.com/Julius36/Web-Dev.git"
+      dest: "/var/www/html"
+      clone: yes
+
+  - name: Start and enable apache service
+    service:
+      name: "{{ apache_service }}"
+      state: started
+      enabled: yes
+

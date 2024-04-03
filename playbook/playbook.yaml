@@ -1,0 +1,51 @@
+---
+
+- name: web server installation
+  hosts: all
+  become: true
+  vars:
+  website_repo_url: "https://github.com/Julius36/Ansible-practice"
+  web_root: "/var/www/html"
+  apache_service_name:
+    Debian: apache2
+    CentOS: httpd
+  tasks:
+
+  - name: Clone website repository from GitHub
+    git:
+      repo: "{{ https://github.com/Julius36/Ansible-practice  }}"
+      dest: "{{ web_root }}"
+      clone: yes
+
+  - name: Install Apache web server
+    package:
+      name:
+        Debian: apache2
+        CentOS: httpd
+      state: present
+
+  - name: Copy custom configuration for virtual host
+    copy:
+      src: /etc/apache/sites-available/julius.conf
+      dest: "/etc/{{ apache_service_name[ansible_distribution] }}/sites-available/julius.conf"
+    notify:
+      - Restart Apache
+
+  - name: Enable custom virtual host
+    command: "{{ 'a2ensite' if ansible_distribution == 'Debian' else 'ln -s' }} julius.conf"
+    args:
+      chdir: "/etc/{{ apache_service_name[ansible_distribution] }}/sites-available/"
+    notify:
+      - Restart Apache
+
+  - name: Disable default virtual host
+    command: "{{ 'a2dissite' if ansible_distribution == 'Debian' else 'rm -f' }} /etc/{{ apache_service_name[ansible_distribution] }}/conf.d/0003"
+    notify:
+      - Restart Apache
+
+  handlers:
+  - name: Restart Apache
+    service:
+      name: "{{ apache_service_name[ansible_distribution] }}"
+      state: restarted
+
